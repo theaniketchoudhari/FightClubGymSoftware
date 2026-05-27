@@ -2,74 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    // Collection: members
-    // Fields: name, phone, email, plan, joinDate, expiryDate, status, qrCode, role
-    //
-    // Collection: payments
-    // Fields: memberId, memberName, amount, date, status, planType
-    //
-    // Collection: attendance
-    // Fields: memberId, date, timestamp
-    //
-    // Collection: workouts
-    // Fields: memberId, date, exercises, notes
-    // ===============================================================
-
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      return isAuthenticated() && 
-        ((request.auth.token.email == "theaniketchoudhari5050@gmail.com") ||
-         (exists(/databases/$(database)/documents/members/$(request.auth.uid)) && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role == 'admin'));
-    }
-
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    function isDocOwner() {
-      return isAuthenticated() && request.auth.uid == resource.data.memberId;
-    }
-
-    match /members/{memberId} {
-      allow read: if isAuthenticated() && (isOwner(memberId) || isAdmin());
-      allow create: if isAuthenticated() && (request.auth.uid == memberId || isAdmin());
-      allow update, delete: if isAuthenticated() && (isOwner(memberId) || isAdmin());
-    }
-
-    match /payments/{paymentId} {
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.memberId || isAdmin());
-      allow write: if isAdmin();
-    }
-
-    match /attendance/{attendanceId} {
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.memberId || isAdmin());
-      allow create: if isAuthenticated(); // QR scan might be done by user or admin
-      allow update, delete: if isAdmin();
-    }
-
-    match /workouts/{workoutId} {
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.memberId || isAdmin());
-      allow write: if isAuthenticated() && (request.auth.uid == request.resource.data.memberId || isAdmin());
-    }
-
-    match /plans/{planId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
-    }
-
-    match /notifications/{notificationId} {
-      allow read: if isAdmin();
-      allow write: if isAdmin();
-    }
-
-    match /expenses/{expenseId} {
-      allow read, write: if isAdmin();
+    match /{document=**} {
+      allow read, write: if isAuthenticated();
     }
   }
 }

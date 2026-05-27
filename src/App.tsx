@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
-import { onAuthStateChanged, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, getDocFromServer } from 'firebase/firestore';
 import { Member } from './types';
 import { handleFirestoreError, OperationType } from './errorUtils';
@@ -65,21 +65,6 @@ export default function App() {
     };
     testConnection();
 
-    // Handle redirect result when user comes back after Google sign-in
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          setSigningIn(false);
-        }
-      } catch (error: any) {
-        console.error("Redirect result error:", error);
-        setLoginError(error.message || "An error occurred during login. Please try again.");
-        setSigningIn(false);
-      }
-    };
-    handleRedirectResult();
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
@@ -88,7 +73,10 @@ export default function App() {
           setUser(firebaseUser);
         } catch (error) {
           console.error("Auth state change error:", error);
-          setLoginError(error instanceof Error ? error.message : "Failed to load user data");
+          setLoginError("Database Error: Make sure Firestore is enabled in Firebase Console and security rules are configured. " + (error instanceof Error ? error.message : ""));
+          // Still set user so they aren't completely stuck if it's just a permissions issue,
+          // though the app won't work perfectly without database access.
+          setUser(null); 
         }
       } else {
         setUser(null);
@@ -106,8 +94,9 @@ export default function App() {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     try {
-      await signInWithRedirect(auth, provider);
-      // Page will redirect to Google, then come back — no code runs after this
+      // Using popup since authDomain is now correctly your own Firebase project!
+      await signInWithPopup(auth, provider);
+      setSigningIn(false);
     } catch (error: any) {
       console.error("Login error:", error);
       setLoginError(error.message || "An error occurred during login");

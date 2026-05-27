@@ -62,6 +62,7 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
   
   const [newMember, setNewMember] = useState({ name: '', phone: '', planId: '', isTest: false });
   const [newPlan, setNewPlan] = useState({ name: '', price: 0, durationDays: 30 });
+  const [whatsappTemplate, setWhatsappTemplate] = useState<string>("Hi {name}, your membership for {planName} is active/expired. Keep training!");
   const [revenueTimeScale, setRevenueTimeScale] = useState<'daily' | 'monthly' | 'yearly'>('monthly');
   const [remindedMembers, setRemindedMembers] = useState<Set<string>>(new Set());
   const [expiryAlert, setExpiryAlert] = useState<Member | null>(null);
@@ -187,12 +188,22 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
       setExpenses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Expense)));
     });
 
+    const qSettings = query(collection(db, 'settings'));
+    const unsubscribeSettings = onSnapshot(qSettings, (snapshot) => {
+      snapshot.forEach((doc) => {
+        if (doc.id === 'whatsapp') {
+          setWhatsappTemplate(doc.data().template);
+        }
+      });
+    });
+
     return () => {
       unsubscribeMembers();
       unsubscribePayments();
       unsubscribeAttendance();
       unsubscribePlans();
       unsubscribeExpenses();
+      unsubscribeSettings();
     };
   }, []);
 
@@ -459,9 +470,22 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
     }
   };
 
+  const handleSaveTemplate = async () => {
+    try {
+      await setDoc(doc(db, 'settings', 'whatsapp'), { template: whatsappTemplate });
+      alert('Template saved successfully!');
+    } catch (error) {
+      console.error("Error saving template", error);
+      alert('Error saving template');
+    }
+  };
+
   const sendWhatsApp = (member: Member) => {
     const invoiceUrl = `${window.location.origin}/api/invoices/${member.id}`;
-    const message = `🥋 *FIGHT CLUB GYM* 🥋\n\nHi ${member.name}, your membership for ${member.planName} is active/expired. Please find below your official invoice link.\n\n📥 *Digital Invoice (PDF):* ${invoiceUrl}\n\nContact Gym Owner (Akshay Choudhari) at +91 83086 28416 for any queries. Keep training!`;
+    let message = whatsappTemplate;
+    message = message.replace(/{name}/g, member.name);
+    message = message.replace(/{planName}/g, member.planName || '');
+    message = message.replace(/{invoiceUrl}/g, invoiceUrl);
     window.open(`https://wa.me/${member.phone}?text=${encodeURIComponent(message)}`);
   };
 
@@ -701,6 +725,7 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
             { id: 'payments', icon: CreditCard, label: 'Revenue' },
             { id: 'pending', icon: Clock, label: 'Pending Bills' },
             { id: 'vault', icon: Shield, label: 'Personal Vault' },
+            { id: 'settings', icon: MessageSquare, label: 'App Settings' },
           ].map((item) => (
             <button
               key={item.id}
@@ -889,6 +914,51 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
             </button>
           </div>
         </header>
+
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">App Settings</h2>
+                <p className="text-slate-500 mt-1">Configure your gym software preferences</p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-blue-600" />
+                WhatsApp Message Template
+              </h3>
+              <div className="bg-blue-50/50 p-4 rounded-2xl mb-6 border border-blue-100">
+                <p className="text-sm text-blue-800 font-medium mb-2">Available Placeholders:</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-2 py-1 bg-white text-blue-600 text-xs font-bold rounded-lg border border-blue-200">{'{name}'}</span>
+                  <span className="px-2 py-1 bg-white text-blue-600 text-xs font-bold rounded-lg border border-blue-200">{'{planName}'}</span>
+                  <span className="px-2 py-1 bg-white text-blue-600 text-xs font-bold rounded-lg border border-blue-200">{'{invoiceUrl}'}</span>
+                </div>
+                <p className="text-xs text-blue-600 mt-2">These will automatically be replaced with the specific member's details when you click the WhatsApp button.</p>
+              </div>
+
+              <textarea
+                value={whatsappTemplate}
+                onChange={(e) => setWhatsappTemplate(e.target.value)}
+                rows={10}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                placeholder="Enter your custom message here..."
+              />
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={handleSaveTemplate}
+                  className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2"
+                >
+                  <Check className="w-5 h-5" />
+                  Save Template
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {activeTab === 'overview' && (
           <div className="space-y-8">

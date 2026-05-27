@@ -1,0 +1,5 @@
+{
+  "name": "Fight Club Gym AI",
+  "description": "Advanced AI-powered Gym Management and Member Engagement platform with QR check-ins, automated billing, and personal trainer AI.",
+  "requestFramePermissions": ["camera"]
+}

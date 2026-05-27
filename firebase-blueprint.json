@@ -1,0 +1,107 @@
+{
+  "entities": {
+    "MembershipPlan": {
+      "title": "MembershipPlan",
+      "description": "Customizable gym membership plans",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "durationDays": { "type": "number" }
+      },
+      "required": ["name", "price", "durationDays"]
+    },
+    "Member": {
+      "title": "Member",
+      "description": "A gym member profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the member" },
+        "phone": { "type": "string", "description": "Phone number for login and WhatsApp" },
+        "email": { "type": "string", "format": "email" },
+        "planId": { "type": "string" },
+        "planName": { "type": "string" },
+        "planPrice": { "type": "number" },
+        "joinDate": { "type": "string", "format": "date-time" },
+        "expiryDate": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["active", "expired", "pending"] },
+        "qrCode": { "type": "string", "description": "Unique identifier for QR check-in" },
+        "role": { "type": "string", "enum": ["member", "admin"] }
+      },
+      "required": ["name", "phone", "planId", "joinDate", "expiryDate", "status", "qrCode"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Membership payment record",
+      "type": "object",
+      "properties": {
+        "memberId": { "type": "string" },
+        "memberName": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["paid", "pending"] },
+        "planType": { "type": "string" }
+      },
+      "required": ["memberId", "amount", "date", "status"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Daily check-in record",
+      "type": "object",
+      "properties": {
+        "memberId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["memberId", "date", "timestamp"]
+    },
+    "Workout": {
+      "title": "Workout",
+      "description": "Member workout log",
+      "type": "object",
+      "properties": {
+        "memberId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "exercises": { "type": "array", "items": { "type": "object" } },
+        "notes": { "type": "string" }
+      },
+      "required": ["memberId", "date"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System notification for admin",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "memberName": { "type": "string" },
+        "memberPhone": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "message": { "type": "string" }
+      },
+      "required": ["type", "timestamp", "message"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Personal vault expense or income record",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["income", "expense"] }
+      },
+      "required": ["title", "amount", "date", "category", "type"]
+    }
+  },
+  "firestore": {
+    "/members/{memberId}": { "schema": "Member", "description": "Member profiles" },
+    "/payments/{paymentId}": { "schema": "Payment", "description": "Payment history" },
+    "/attendance/{attendanceId}": { "schema": "Attendance", "description": "Attendance logs" },
+    "/workouts/{workoutId}": { "schema": "Workout", "description": "Workout logs" },
+    "/plans/{planId}": { "schema": "MembershipPlan", "description": "Custom membership plans" },
+    "/notifications/{notificationId}": { "schema": "Notification", "description": "Admin notifications" },
+    "/expenses/{expenseId}": { "schema": "Expense", "description": "Personal vault expenses" }
+  }
+}

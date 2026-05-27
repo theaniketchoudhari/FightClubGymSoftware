@@ -1,11 +1,9 @@
 {
-  "projectId": "gen-lang-client-0330856895",
-  "appId": "1:1098687359569:web:bf5a22bbd10c990fd62670",
-  "apiKey": "AIzaSyA8KAqBqjkghqc6Oxt2Oe3ewjGzSXDjzeg",
-  "authDomain": "gen-lang-client-0330856895.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-4823fb7b-8477-40ed-94aa-aac1aff4bdba",
-  "storageBucket": "gen-lang-client-0330856895.firebasestorage.app",
-  "messagingSenderId": "1098687359569",
-  "measurementId": ""
+  "projectId": "fightclubgym-b2db1",
+  "appId": "1:431854107466:web:ffd73c7aad3b7f1cb25fb3",
+  "apiKey": "AIzaSyD5jaZfGsPSBS3U9ILybt7CWQCBWv0BWQo",
+  "authDomain": "fightclubgym-b2db1.firebaseapp.com",
+  "storageBucket": "fightclubgym-b2db1.firebasestorage.app",
+  "messagingSenderId": "431854107466",
+  "measurementId": "G-V84WRJECZ9"
 }
-

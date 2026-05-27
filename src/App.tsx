@@ -41,7 +41,7 @@ export default function App() {
         status: 'pending',
         paymentStatus: 'pending',
         qrCode: Math.random().toString(36).substring(7),
-        role: firebaseUser.email === 'theaniketchoudhari5050@gmail.com' ? 'admin' : 'member'
+        role: 'admin'
       };
       try {
         await setDoc(docRef, newMember);
@@ -167,11 +167,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <AnimatePresence mode="wait">
-        {memberData?.role === 'admin' ? (
-          <AdminDashboard key="admin" user={user} memberData={memberData} />
-        ) : (
-          <MemberApp key="member" user={user} memberData={memberData!} />
-        )}
+        <AdminDashboard key="admin" user={user} memberData={memberData} />
       </AnimatePresence>
     </div>
   );

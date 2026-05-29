@@ -143,6 +143,7 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
     // Listen for background automation notifications
     const qNotifications = query(
       collection(db, 'notifications'), 
+      where('adminId', '==', user.uid),
       orderBy('timestamp', 'desc'),
       limit(1)
     );
@@ -163,35 +164,35 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
   }, []);
 
   useEffect(() => {
-    const qMembers = query(collection(db, 'members'), orderBy('joinDate', 'desc'));
+    const qMembers = query(collection(db, 'members'), where('adminId', '==', user.uid), orderBy('joinDate', 'desc'));
     const unsubscribeMembers = onSnapshot(qMembers, (snapshot) => {
       setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member)));
     });
 
-    const qPayments = query(collection(db, 'payments'), orderBy('date', 'desc'));
+    const qPayments = query(collection(db, 'payments'), where('adminId', '==', user.uid), orderBy('date', 'desc'));
     const unsubscribePayments = onSnapshot(qPayments, (snapshot) => {
       setPayments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Payment)));
     });
 
-    const qAttendance = query(collection(db, 'attendance'), orderBy('timestamp', 'desc'));
+    const qAttendance = query(collection(db, 'attendance'), where('adminId', '==', user.uid), orderBy('timestamp', 'desc'));
     const unsubscribeAttendance = onSnapshot(qAttendance, (snapshot) => {
       setAttendance(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Attendance)));
     });
 
-    const qPlans = query(collection(db, 'plans'), orderBy('name', 'asc'));
+    const qPlans = query(collection(db, 'plans'), where('adminId', '==', user.uid), orderBy('name', 'asc'));
     const unsubscribePlans = onSnapshot(qPlans, (snapshot) => {
       setPlans(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MembershipPlan)));
     });
 
-    const qExpenses = query(collection(db, 'expenses'), orderBy('date', 'desc'));
+    const qExpenses = query(collection(db, 'expenses'), where('adminId', '==', user.uid), orderBy('date', 'desc'));
     const unsubscribeExpenses = onSnapshot(qExpenses, (snapshot) => {
       setExpenses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Expense)));
     });
 
-    const qSettings = query(collection(db, 'settings'));
+    const qSettings = query(collection(db, 'settings'), where('adminId', '==', user.uid));
     const unsubscribeSettings = onSnapshot(qSettings, (snapshot) => {
       snapshot.forEach((doc) => {
-        if (doc.id === 'whatsapp') {
+        if (doc.id === `whatsapp_${user.uid}`) {
           setWhatsappTemplate(doc.data().template);
         }
       });
@@ -231,7 +232,8 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
                 memberName: member.name,
                 memberPhone: member.phone,
                 timestamp: serverTimestamp(),
-                message: `Auto-reminder sent successfully to ${member.name}`
+                message: `Auto-reminder sent successfully to ${member.name}`,
+                adminId: user.uid
               });
             } catch (err) {
               console.error("[Client Automation Error]:", err);
@@ -273,7 +275,8 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
       autoReminderSent: false,
       qrCode: Math.random().toString(36).substring(7),
       role: 'member',
-      lastPaymentDate: joinDate
+      lastPaymentDate: joinDate,
+      adminId: user.uid
     };
 
     try {
@@ -286,7 +289,8 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
         amount: selectedPlan.price,
         date: joinDate,
         status: 'pending',
-        planName: selectedPlan.name
+        planName: selectedPlan.name,
+        adminId: user.uid
       });
 
       setShowAddMember(false);
@@ -328,7 +332,8 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
         amount: selectedPlan.price,
         date: joinDate,
         status: 'pending',
-        planName: selectedPlan.name
+        planName: selectedPlan.name,
+        adminId: user.uid
       });
       alert('Demo member created! Expiry in 3 minutes.');
     } catch (error) {
@@ -365,7 +370,7 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
     e.preventDefault();
     const id = Math.random().toString(36).substring(7);
     try {
-      await setDoc(doc(db, 'plans', id), { ...newPlan, id });
+      await setDoc(doc(db, 'plans', id), { ...newPlan, id, adminId: user.uid });
       setShowAddPlan(false);
       setNewPlan({ name: '', price: 0, durationDays: 30 });
     } catch (error) {
@@ -415,7 +420,8 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
         amount: selectedPlan.price,
         date: nowStr,
         status: renewStatus,
-        planName: selectedPlan.name
+        planName: selectedPlan.name,
+        adminId: user.uid
       });
 
       // 3. Clear the renewal modal state
@@ -461,7 +467,8 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
         amount: selectedPlan.price,
         date: nowStr,
         status: 'paid',
-        planName: selectedPlan.name
+        planName: selectedPlan.name,
+        adminId: user.uid
       });
 
       setSelectedInvoiceMember(updatedMember);
@@ -472,7 +479,7 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
 
   const handleSaveTemplate = async () => {
     try {
-      await setDoc(doc(db, 'settings', 'whatsapp'), { template: whatsappTemplate });
+      await setDoc(doc(db, 'settings', `whatsapp_${user.uid}`), { template: whatsappTemplate, adminId: user.uid });
       alert('Template saved successfully!');
     } catch (error) {
       console.error("Error saving template", error);
@@ -622,7 +629,8 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
       await setDoc(doc(db, 'expenses', id), {
         ...newExpense,
         id,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        adminId: user.uid
       });
       setShowAddExpense(false);
       setNewExpense({ title: '', amount: 0, category: 'Other', type: 'expense' });

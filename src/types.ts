@@ -3,6 +3,7 @@ export interface MembershipPlan {
   name: string;
   price: number;
   durationDays: number;
+  adminId?: string;
 }
 
 export interface Member {
@@ -21,6 +22,7 @@ export interface Member {
   role: 'member' | 'admin';
   lastPaymentDate?: string;
   autoReminderSent?: boolean;
+  adminId?: string;
 }
 
 export interface Payment {
@@ -31,6 +33,7 @@ export interface Payment {
   date: string;
   status: 'paid' | 'pending';
   planName: string;
+  adminId?: string;
 }
 
 export interface Attendance {
@@ -38,6 +41,7 @@ export interface Attendance {
   memberId: string;
   date: string;
   timestamp: string;
+  adminId?: string;
 }
 
 export interface Workout {
@@ -46,6 +50,7 @@ export interface Workout {
   date: string;
   exercises: { name: string; sets: number; reps: number; weight?: number }[];
   notes?: string;
+  adminId?: string;
 }
 
 export interface HealthStat {
@@ -55,6 +60,7 @@ export interface HealthStat {
   weight: number;
   bodyFat?: number;
   muscleMass?: number;
+  adminId?: string;
 }
 
 export interface Expense {
@@ -65,4 +71,5 @@ export interface Expense {
   category: string;
   description?: string;
   type: 'income' | 'expense';
+  adminId?: string;
 }

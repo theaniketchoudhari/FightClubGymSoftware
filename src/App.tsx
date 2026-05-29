@@ -41,7 +41,8 @@ export default function App() {
         status: 'pending',
         paymentStatus: 'pending',
         qrCode: Math.random().toString(36).substring(7),
-        role: 'admin'
+        role: 'admin',
+        adminId: firebaseUser.uid
       };
       try {
         await setDoc(docRef, newMember);

@@ -143,50 +143,63 @@ export default function AdminDashboard({ user, memberData }: { user: any, member
     // Listen for background automation notifications
     const qNotifications = query(
       collection(db, 'notifications'), 
-      where('adminId', '==', user.uid),
-      orderBy('timestamp', 'desc'),
-      limit(1)
+      where('adminId', '==', user.uid)
     );
     const unsubscribeNotifications = onSnapshot(qNotifications, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === "added") {
-          const data = change.doc.data();
-          // Only show if it's recent (within last 10 seconds)
-          if (data.timestamp && (Date.now() - data.timestamp.toMillis() < 10000)) {
-            setAutomationSuccess(data.message);
-            setTimeout(() => setAutomationSuccess(null), 5000);
-          }
-        }
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      docs.sort((a, b) => {
+        const timeA = a.timestamp ? a.timestamp.toMillis() : 0;
+        const timeB = b.timestamp ? b.timestamp.toMillis() : 0;
+        return timeB - timeA;
       });
+      
+      if (docs.length > 0) {
+        const latest = docs[0];
+        // Only show if it's recent (within last 10 seconds)
+        if (latest.timestamp && (Date.now() - latest.timestamp.toMillis() < 10000)) {
+          setAutomationSuccess(latest.message);
+          setTimeout(() => setAutomationSuccess(null), 5000);
+        }
+      }
     });
 
     return () => unsubscribeNotifications();
   }, []);
 
   useEffect(() => {
-    const qMembers = query(collection(db, 'members'), where('adminId', '==', user.uid), orderBy('joinDate', 'desc'));
+    const qMembers = query(collection(db, 'members'), where('adminId', '==', user.uid));
     const unsubscribeMembers = onSnapshot(qMembers, (snapshot) => {
-      setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member)));
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
+      docs.sort((a, b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime());
+      setMembers(docs);
     });
 
-    const qPayments = query(collection(db, 'payments'), where('adminId', '==', user.uid), orderBy('date', 'desc'));
+    const qPayments = query(collection(db, 'payments'), where('adminId', '==', user.uid));
     const unsubscribePayments = onSnapshot(qPayments, (snapshot) => {
-      setPayments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Payment)));
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Payment));
+      docs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setPayments(docs);
     });
 
-    const qAttendance = query(collection(db, 'attendance'), where('adminId', '==', user.uid), orderBy('timestamp', 'desc'));
+    const qAttendance = query(collection(db, 'attendance'), where('adminId', '==', user.uid));
     const unsubscribeAttendance = onSnapshot(qAttendance, (snapshot) => {
-      setAttendance(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Attendance)));
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Attendance));
+      docs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setAttendance(docs);
     });
 
-    const qPlans = query(collection(db, 'plans'), where('adminId', '==', user.uid), orderBy('name', 'asc'));
+    const qPlans = query(collection(db, 'plans'), where('adminId', '==', user.uid));
     const unsubscribePlans = onSnapshot(qPlans, (snapshot) => {
-      setPlans(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MembershipPlan)));
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MembershipPlan));
+      docs.sort((a, b) => a.name.localeCompare(b.name));
+      setPlans(docs);
     });
 
-    const qExpenses = query(collection(db, 'expenses'), where('adminId', '==', user.uid), orderBy('date', 'desc'));
+    const qExpenses = query(collection(db, 'expenses'), where('adminId', '==', user.uid));
     const unsubscribeExpenses = onSnapshot(qExpenses, (snapshot) => {
-      setExpenses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Expense)));
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Expense));
+      docs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setExpenses(docs);
     });
 
     const qSettings = query(collection(db, 'settings'), where('adminId', '==', user.uid));
